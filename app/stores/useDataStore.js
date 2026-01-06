@@ -1,9 +1,8 @@
 // src/stores/bookingStore.js
 import { defineStore } from 'pinia'
-import { supabase } from '../supabase' // Pas het pad aan indien nodig
+// LET OP: Geen import meer van supabase hierboven!
 
 export const useBookingStore = defineStore('booking', {
-    // 1. STATE: Hier bewaren we de data
     state: () => ({
         resources: [],
         reservations: [],
@@ -11,14 +10,20 @@ export const useBookingStore = defineStore('booking', {
         error: null
     }),
 
-    // 2. ACTIONS: Hier halen we de data op
     actions: {
-        // Haal resources (kamers/spullen) op
         async fetchResources() {
+            // 1. Haal de supabase client op via de composable van je collega
+            const supabase = useSupabase()
+
+            if (!supabase) {
+                this.error = "Supabase niet beschikbaar"
+                return
+            }
+
             this.loading = true
             try {
                 const { data, error } = await supabase
-                    .from('resources') // Zorg dat deze tabelnaam klopt in Supabase
+                    .from('resources')
                     .select('*')
 
                 if (error) throw error
@@ -31,12 +36,15 @@ export const useBookingStore = defineStore('booking', {
             }
         },
 
-        // Haal reservations (boekingen) op
         async fetchReservations() {
+            const supabase = useSupabase() // <--- Hier ook toevoegen
+
+            if (!supabase) return
+
             this.loading = true
             try {
                 const { data, error } = await supabase
-                    .from('reservations') // Zorg dat deze tabelnaam klopt in Supabase
+                    .from('reservations')
                     .select('*')
 
                 if (error) throw error
@@ -49,7 +57,6 @@ export const useBookingStore = defineStore('booking', {
             }
         },
 
-        // Een hulpfunctie om alles tegelijk op te halen
         async fetchAllData() {
             await Promise.all([this.fetchResources(), this.fetchReservations()])
         }
