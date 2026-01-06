@@ -1,7 +1,6 @@
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: [
-    '@pinia/nuxt'
   ],
   runtimeConfig: {
     public: {
