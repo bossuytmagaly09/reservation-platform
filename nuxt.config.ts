@@ -1,7 +1,8 @@
 // nuxt.config.ts
 export default defineNuxtConfig({
   modules: [
-      '@pinia/nuxt'
+      '@pinia/nuxt',
+      '@nuxtjs/tailwindcss'
   ],
   runtimeConfig: {
     public: {
@@ -11,7 +12,9 @@ export default defineNuxtConfig({
   },
   css: [
 //  globale Tailwind / CSS imports
-    '@/assets/css/colors.css'
+    '~/assets/css/tailwind.css',
+    '~/assets/css/colors.css',
+    '~/assets/css/fonts.css'
   ],
 
   compatibilityDate: '2025-07-15',

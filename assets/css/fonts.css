@@ -1,0 +1,30 @@
+/* ================================
+   FONTS.CSS
+   Centrale fontconfiguratie
+   ================================ */
+
+/* 1. Google Fonts imports */
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
+
+/* 2. Font variables */
+:root {
+    /* Modern, clean, professioneel */
+    --font-inter: 'Inter Tight', sans-serif;
+
+    /* Warm, vriendelijk, zacht-magisch */
+    --font-quicksand: 'Quicksand', sans-serif;
+
+    /* Elegant, sprookjesachtig, artistiek */
+    --font-cormorant: 'Cormorant Garamond', serif;
+
+    /* Default choices (kunnen jullie aanpassen) */
+    --font-base: var(--font-inter);
+    --font-title: var(--font-inter);
+}
+
+/* 3. Apply base font */
+body {
+    font-family: var(--font-base);
+}
