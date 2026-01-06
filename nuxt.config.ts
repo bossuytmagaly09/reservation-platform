@@ -10,7 +10,8 @@ export default defineNuxtConfig({
     }
   },
   css: [
-// jouw globale Tailwind / CSS imports
+//  globale Tailwind / CSS imports
+    '@/assets/css/colors.css'
   ],
 
   compatibilityDate: '2025-07-15',
