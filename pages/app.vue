@@ -1,6 +1,6 @@
 <template>
   <div>
-
+<ResourceCard />
   </div>
 </template>
 
