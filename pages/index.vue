@@ -63,7 +63,7 @@
             class="text-lg md:text-xl font-light leading-relaxed max-w-2xl mx-auto mb-10"
             style="font-family: var(--font-base);"
         >
-          Een moderne Nuxt 3‑app die met Supabase communiceert. Ontdek functionaliteit,
+          Een moderne Nuxt 4‑app die met Supabase communiceert. Ontdek functionaliteit,
           eenvoud en een vleugje magie. Klik op de knop om de app te betreden.
         </p>
 
