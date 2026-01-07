@@ -43,12 +43,6 @@
           Reservaties
         </NuxtLink>
         <NuxtLink
-            to="/profile"
-            class="hover:text-[var(--color-bg)] transition"
-        >
-          Profiel
-        </NuxtLink>
-        <NuxtLink
             to="/settings"
             class="hover:text-[var(--color-bg)] transition"
         >
