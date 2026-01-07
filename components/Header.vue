@@ -31,7 +31,7 @@
       <div class="hidden md:flex items-center gap-6 text-sm font-medium"
            style="font-family: var(--font-base);">
         <NuxtLink
-            to="/app"
+            to="/"
             class="hover:text-[var(--color-bg)] transition"
         >
           Home
@@ -41,6 +41,12 @@
             class="hover:text-[var(--color-bg)] transition"
         >
           Reservaties
+        </NuxtLink>
+        <NuxtLink
+            to="/resources"
+            class="hover:text-[var(--color-bg)] transition"
+        >
+          Resources
         </NuxtLink>
         <NuxtLink
             to="/settings"
