@@ -13,8 +13,6 @@ export default defineNuxtConfig({
   css: [
 //  globale Tailwind / CSS imports
     '~/assets/css/tailwind.css',
-    '~/assets/css/colors.css',
-    '~/assets/css/fonts.css'
   ],
 
   compatibilityDate: '2025-07-15',

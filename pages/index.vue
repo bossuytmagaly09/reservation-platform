@@ -1,199 +1,101 @@
 <template>
-  <!--
-    De volledige pagina is een flex container die verticaal gestapeld is.
-    min-h-screen zorgt ervoor dat de pagina minstens de hoogte van het scherm heeft.
-    De achtergrondkleur komt uit onze CSS-variabelen (colors.css).
-    font-sans gebruikt het basisfont dat we in fonts.css hebben ingesteld.
-  -->
-  <div class="flex flex-col min-h-screen bg-[var(--color-bg)] font-sans">
+  <div class="max-w-6xl mx-auto px-6 py-10">
 
-    <!-- ──────────────────────────────────────────────────────────────── -->
-    <!-- HERO SECTION: Introductie + Call to Action                       -->
-    <!-- ──────────────────────────────────────────────────────────────── -->
-    <section
-        class="relative bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] py-20"
-    >
-      <!--
-        max-w-3xl: beperkt de breedte zodat de tekst mooi gecentreerd blijft.
-        mx-auto: centreert horizontaal.
-        px-6: padding links/rechts voor mobiele toestellen.
-        text-center: centreert alle tekst.
-        text-white: maakt alle tekst wit.
-        backdrop-blur-sm: subtiele blur voor een glaseffect.
-      -->
-      <div class="max-w-3xl mx-auto px-6 text-center text-white backdrop-blur-sm">
+    <!-- PAGINA TITEL -->
+    <h1 class="text-4xl font-bold mb-6 text-[var(--color-primary)]"
+        style="font-family: var(--font-title);">
+      Resources
+    </h1>
 
-        <!--
-          HOOFD TITEL
-          - Grote, opvallende titel
-          - tracking-tight: minder letterspatiëring voor een moderne look
-          - drop-shadow-lg: subtiele schaduw voor extra diepte
-          - font-family via CSS-variabele (fonts.css)
-        -->
-        <h1
-            class="text-5xl md:text-7xl font-extrabold mb-4 tracking-tight drop-shadow-lg"
-            style="font-family: var(--font-title);"
-        >
-          Reservations
-        </h1>
+    <!-- LOADING STATE -->
+    <div v-if="loading" class="text-center py-20 text-[var(--color-text-muted)]">
+      ⏳ Resources laden...
+    </div>
 
-        <!--
-          SUBTITEL
-          - Medium gewicht
-          - underline met lichte decoratie
-          - gebruikt het basisfont
-        -->
-        <h2
-            class="text-2xl md:text-3xl font-medium mb-6"
-            style="font-family: var(--font-base);"
-        >
-          Made with 💚 by
-          <span class="underline decoration-2 decoration-white/50">
-            Nikita, Magaly & Friedel
-          </span>
-        </h2>
+    <!-- ERROR STATE -->
+    <div v-else-if="error" class="text-center py-20 text-red-500 font-medium">
+      ❌ {{ error }}
+    </div>
 
-        <!--
-          BESCHRIJVING
-          - font-light: zachtere typografie
-          - leading-relaxed: meer regelafstand voor leesbaarheid
-          - max-w-2xl: tekst blijft mooi compact
-        -->
-        <p
-            class="text-lg md:text-xl font-light leading-relaxed max-w-2xl mx-auto mb-10"
-            style="font-family: var(--font-base);"
-        >
-          Een moderne Nuxt 4‑app die met Supabase communiceert. Ontdek functionaliteit,
-          eenvoud en een vleugje magie. Klik op de knop om de app te betreden.
-        </p>
+    <!-- EMPTY STATE -->
+    <div v-else-if="resources.length === 0" class="text-center py-20 text-[var(--color-text-muted)]">
+      Geen resources gevonden.
+    </div>
 
-        <!--
-          CTA BUTTON (NuxtLink)
-          - bg-white/10: transparante witte achtergrond
-          - backdrop-blur-sm: glaseffect
-          - hover: scale, ring, en lichte achtergrondverandering
-          - animate-pulse: subtiele animatie om aandacht te trekken
-        -->
-        <NuxtLink
-            to="/app"
-            class="inline-block px-8 py-3 rounded-lg font-semibold bg-white/10 backdrop-blur-sm
-                 transition transform hover:scale-105 hover:bg-white/20 hover:ring-2 hover:ring-white/30
-                 text-[var(--color-surface)] animate-pulse"
-            style="font-family: var(--font-base);"
-        >
-          Ga naar de app
-        </NuxtLink>
-      </div>
-    </section>
-
-    <!-- ──────────────────────────────────────────────────────────────── -->
-    <!-- SUPABASE STATUS SECTION                                          -->
-    <!-- ──────────────────────────────────────────────────────────────── -->
-    <section class="py-12 bg-[var(--color-surface)] shadow-inner">
-      <!--
-        max-w-3xl: zelfde breedte als hero voor consistentie
-        text-center: alles gecentreerd
-      -->
-      <div class="max-w-3xl mx-auto px-6 text-center">
-
-        <!-- Titel van de status sectie -->
-        <h2
-            class="text-2xl font-semibold mb-3"
-            style="color: var(--color-primary); font-family: var(--font-title);"
-        >
-          Supabase verbinding
-        </h2>
-
-        <!--
-          De actuele status van de Supabase verbinding.
-          Wordt dynamisch geüpdatet via Vue reactivity.
-        -->
-        <p
-            class="text-md mb-2 tracking-wide"
-            style="color: var(--color-text); font-family: var(--font-base);"
-        >
-          {{ connectionStatus }}
-        </p>
-
-        <!-- Extra uitleg -->
-        <p
-            class="text-sm"
-            style="color: var(--color-text-muted); font-family: var(--font-base);"
-        >
-          De Supabase client is beschikbaar via
-          <code class="font-medium bg-[var(--color-primary-light)]/20 rounded px-1">
-            useSupabase()
-          </code>.
-        </p>
-      </div>
-    </section>
+    <!-- RESOURCE GRID -->
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <ResourceCard
+          v-for="resource in resources"
+          :key="resource.id"
+          :id="resource.id"
+          :name="resource.name"
+          :type="resource.type"
+          :description="resource.description"
+          :image_url="resource.image_url"
+          :reservation_count="resource.reservation_count"
+      />
+    </div>
 
   </div>
 </template>
 
 <script setup>
 /*
-  SCRIPT SECTION
-  --------------
-  Hier gebeurt de logica voor het testen van de Supabase verbinding.
-  We gebruiken Vue's Composition API (ref, onMounted) en onze eigen
-  Supabase composable (useSupabase).
+  Dit is de pagina die alle resources ophaalt uit Supabase
+  en ze toont in een grid van ResourceCards.
 */
 
 import { ref, onMounted } from 'vue'
 import { useSupabase } from '~/composables/useSupabase'
+import ResourceCard from '~/components/ResourceCard.vue'
 
-// Reactive variabele die de status van de verbinding toont
-const connectionStatus = ref('Verbinding testen...')
+// Reactive variabelen
+const resources = ref([])
+const loading = ref(true)
+const error = ref(null)
 
-// Haalt de Supabase client op via onze composable
+// Supabase client ophalen
 const supabase = useSupabase()
 
-// Wordt uitgevoerd zodra de component in de DOM staat
+// Data ophalen bij het laden van de pagina
 onMounted(async () => {
-
-  // Als er geen Supabase client is, tonen we een foutmelding
-  if (!supabase) {
-    connectionStatus.value = '❌ Geen Supabase client beschikbaar'
-    return
-  }
-
   try {
     /*
-      We proberen de huidige sessie op te halen.
-      - Als er een error is → tonen we een waarschuwing
-      - Als alles werkt → tonen we een succesmelding
+      Query naar Supabase:
+      We halen alle velden op uit de tabel "resources".
+      Later kunnen we hier ook joins toevoegen voor reservaties.
     */
-    const { data: { session }, error } = await supabase.auth.getSession()
+    const { data, error: supaError } = await supabase
+        .from('resources')
+        .select('*')
 
-    if (error) {
-      connectionStatus.value = `⚠️ Verbinding ok, maar auth error: ${error.message}`
-    } else {
-      connectionStatus.value = '✅ Supabase verbinding succesvol. Client is klaar voor gebruik.'
+    if (supaError) {
+      error.value = 'Kon resources niet ophalen: ' + supaError.message
+      return
     }
 
-  } catch (e) {
-    // Algemene foutafhandeling
-    connectionStatus.value = `❌ Fout: ${e.message}`
+    // Voorlopig zetten we reservation_count op 0
+    resources.value = data.map(r => ({
+      ...r,
+      reservation_count: 0
+    }))
+
+  } catch (err) {
+    error.value = 'Onverwachte fout: ' + err.message
+  } finally {
+    loading.value = false
   }
 })
 </script>
 
 <style scoped>
-/*
-  PAGE TRANSITION ANIMATIES
-  -------------------------
-  Deze animaties worden gebruikt wanneer de pagina in- of uitfade.
-  Nuxt ondersteunt page transitions automatisch.
-*/
-
-.page-enter-active,
-.page-leave-active {
-  transition: opacity 0.3s ease;
+/* Subtiele fade-in animatie */
+div {
+  animation: fadeIn 0.4s ease-out;
 }
 
-.page-enter-from,
-.page-leave-to {
-  opacity: 0;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 </style>
