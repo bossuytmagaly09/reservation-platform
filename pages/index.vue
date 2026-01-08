@@ -23,7 +23,7 @@
     </div>
 
     <!-- RESOURCE GRID -->
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <ResourceCard
           v-for="resource in resources"
           :key="resource.id"
@@ -31,7 +31,7 @@
           :name="resource.name"
           :type="resource.type"
           :description="resource.description"
-          :image_url="resource.image_url"
+          :icon="resource.icon"
           :reservation_count="resource.reservation_count"
       />
     </div>

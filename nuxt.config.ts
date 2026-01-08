@@ -13,7 +13,9 @@ export default defineNuxtConfig({
   css: [
 //  globale Tailwind / CSS imports
     '~/assets/css/tailwind.css',
-  ],
+    "@phosphor-icons/core"
+
+],
 
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true }
