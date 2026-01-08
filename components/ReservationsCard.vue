@@ -15,7 +15,7 @@
         {{ title }}
       </h3>
       <p class="text-xs text-slate-400 truncate">
-        Resource #{{ resources_id }} · Gebruiker #{{ users_id }}
+        {{ resources?.name }} · {{ users?.first_name }} {{ users?.last_name }}
       </p>
     </div>
 

@@ -15,8 +15,7 @@ const supabase = useSupabase()
 onMounted(async () => {
   try {
     const { data, error: supaError } = await supabase
-        .from('reservations')
-        .select('*')
+        .from('reservations') .select(` id, title, start_time, end_time, resources_id, users_id, resources ( name ), users:users ( first_name, last_name ) `)
 
     if (supaError) {
       error.value = 'Kon reservaties niet ophalen: ' + supaError.message
@@ -69,7 +68,14 @@ const sortedReservations = computed(() => {
           v-for="(item, index) in sortedReservations"
           :key="item.id"
           :index="index + 1"
-          v-bind="item"
+          :id="item.id"
+          :title="item.title"
+          :start_time="item.start_time"
+          :end_time="item.end_time"
+          :resources_id="item.resources_id"
+          :users_id="item.users_id"
+          :resources="item.resources"
+          :users="item.users"
       />
     </div>
 
