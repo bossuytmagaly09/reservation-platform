@@ -11,28 +11,29 @@
 
 /* Hier voegen we jouw custom scrollbar toe */
 @layer utilities {
-    .custom-scrollbar {
-        scrollbar-width: thin;
-        scrollbar-color: #64748b #1e293b;
-        overscroll-behavior: contain;
-    }
-
+    /* Werkt in Chrome, Edge, Safari en nieuwe Firefox versies */
     .custom-scrollbar::-webkit-scrollbar {
-        width: 12px;
+        width: 8px; /* Breedte van de balk */
     }
 
     .custom-scrollbar::-webkit-scrollbar-track {
-        background: #1e293b;
-        border-radius: 6px;
+        background: #1e293b; /* Kleur van de baan (matcht bg-slate-800) */
+        border-radius: 4px;
     }
 
     .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #475569;
-        border-radius: 6px;
-        border: 2px solid #1e293b;
+        background: #475569; /* Kleur van de 'duim' (slate-600) */
+        border-radius: 4px;
+        border: 2px solid #1e293b; /* Zorgt voor een randje eromheen */
     }
 
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+        background: #64748b; /* Iets lichter bij hover (slate-500) */
+    }
+
+    /* Voor Firefox (optioneel, omdat Firefox nu ook vaak webkit ondersteunt) */
+    .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #475569 #1e293b;
     }
 }

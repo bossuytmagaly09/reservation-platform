@@ -1,8 +1,10 @@
 <script setup>
-import { useBoardStore } from '@/stores/board'
+// 1. Importeer de juiste store (matcht met bestandsnaam)
+import { useDataStore } from '@/stores/useDataStore'
 import { computed, reactive, ref, onMounted } from 'vue'
 
-const boardStore = useBoardStore()
+// 2. Gebruik de store
+const dataStore = useDataStore()
 
 // --- STATE ---
 const showResourceMenu = ref(false)
@@ -35,13 +37,15 @@ const generateTimeSlots = () => {
 
 onMounted(async () => {
   generateTimeSlots()
-  await boardStore.fetchResources()
+  // 3. Roep de actie aan op de dataStore
+  await dataStore.fetchResources()
 })
 
 // --- COMPUTED ---
 const selectedResource = computed(() => {
-  if (!boardStore.resources) return null
-  return boardStore.resources.find(r => r.id === form.resourceId)
+  // 4. Check dataStore resources
+  if (!dataStore.resources) return null
+  return dataStore.resources.find(r => r.id === form.resourceId)
 })
 
 // --- ACTIONS ---
@@ -76,8 +80,8 @@ const openDatePicker = (event) => {
     console.log("Browser ondersteunt showPicker niet.")
   }
 }
-
-// // --- SUBMIT --- al een beginpunt om de logica te maken voor de submit door friedel
+// al een begin voor de fucntie om de submit knop te doen werken
+// // --- SUBMIT ---
 // const handleSubmit = async () => {
 //   if (!form.resourceId || !form.title || !form.startDate || !form.endDate || !form.startTime || !form.endTime) {
 //     alert('Vul alle verplichte velden in.')
@@ -103,7 +107,8 @@ const openDatePicker = (event) => {
 //     endTime: form.endTime
 //   }
 //
-//   const result = await boardStore.createReservation(payload)
+//   // 5. Gebruik de dataStore functie
+//   const result = await dataStore.createReservation(payload)
 //
 //   if (result.success) {
 //     alert('Reservatie succesvol opgeslagen!')
@@ -167,14 +172,16 @@ const openDatePicker = (event) => {
                 class="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg shadow-xl max-h-60 overflow-y-auto custom-scrollbar"
             >
               <div
-                  v-for="res in boardStore.resources"
+                  v-for="res in dataStore.resources"
                   :key="res.id"
                   @click="selectResource(res.id)"
-                  class="p-3 text-sm text-slate-300 hover:bg-blue-600 hover:text-white cursor-pointer transition-colors border-b border-slate-700/50 last:border-0"
-                  :class="{'bg-slate-700 text-white': form.resourceId === res.id}"
+                  class="p-3 cursor-pointer transition-colors border-b border-slate-700/50 last:border-0 hover:bg-blue-600 group"
+                  :class="{'bg-slate-700': form.resourceId === res.id}"
               >
-                <div class="font-medium">{{ res.name }}</div>
-                <div class="text-xs opacity-70">{{ res.type }}</div>
+                <div class="font-medium text-slate-200 group-hover:text-white">{{ res.name }}</div>
+                <div class="text-xs text-slate-400 group-hover:text-blue-100 mt-0.5">
+                  {{ res.description || res.type || 'Geen info' }}
+                </div>
               </div>
             </div>
           </div>
@@ -186,94 +193,40 @@ const openDatePicker = (event) => {
       </div>
 
       <div class="grid grid-cols-2 gap-4 relative" :class="showStartMenu ? 'z-50' : 'z-10'">
-
         <div class="col-span-1 cursor-pointer">
           <label class="block text-sm text-slate-300 mb-1">Start Datum</label>
-          <input
-              v-model="form.startDate"
-              type="date"
-              @click="openDatePicker"
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-200 [color-scheme:dark] cursor-pointer"
-          />
+          <input v-model="form.startDate" type="date" @click="openDatePicker" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-200 [color-scheme:dark] cursor-pointer" />
         </div>
-
         <div class="col-span-1 relative">
           <label class="block text-sm text-slate-300 mb-1">Start Tijd</label>
-          <div
-              @click="showStartMenu = !showStartMenu; showEndMenu = false; showResourceMenu = false"
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 cursor-pointer flex justify-between items-center hover:border-slate-500 transition"
-              :class="{'border-blue-500 ring-1 ring-blue-500': showStartMenu}"
-          >
+          <div @click="showStartMenu = !showStartMenu; showEndMenu = false; showResourceMenu = false" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 cursor-pointer flex justify-between items-center hover:border-slate-500 transition" :class="{'border-blue-500 ring-1 ring-blue-500': showStartMenu}">
             <span>{{ form.startTime || '--:--' }}</span>
-            <svg class="h-3 w-3 fill-slate-400" viewBox="0 0 20 20">
-              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-            </svg>
+            <svg class="h-3 w-3 fill-slate-400" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
           </div>
-
-          <div
-              v-if="showStartMenu"
-              class="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg shadow-xl max-h-48 overflow-y-auto custom-scrollbar"
-          >
-            <div
-                v-for="time in timeSlots"
-                :key="time"
-                @click="selectStartTime(time)"
-                class="p-2 text-sm text-slate-300 hover:bg-blue-600 hover:text-white cursor-pointer transition-colors"
-                :class="{'bg-slate-700 text-white': form.startTime === time}"
-            >
-              {{ time }}
-            </div>
+          <div v-if="showStartMenu" class="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+            <div v-for="time in timeSlots" :key="time" @click="selectStartTime(time)" class="p-2 text-sm text-slate-300 hover:bg-blue-600 hover:text-white cursor-pointer transition-colors" :class="{'bg-slate-700 text-white': form.startTime === time}">{{ time }}</div>
           </div>
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-4 relative" :class="showEndMenu ? 'z-50' : 'z-0'">
-
         <div class="col-span-1 cursor-pointer">
           <label class="block text-sm text-slate-300 mb-1">Eind Datum</label>
-          <input
-              v-model="form.endDate"
-              type="date"
-              @click="openDatePicker"
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-200 [color-scheme:dark] cursor-pointer"
-          />
+          <input v-model="form.endDate" type="date" @click="openDatePicker" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-200 [color-scheme:dark] cursor-pointer" />
         </div>
-
         <div class="col-span-1 relative">
           <label class="block text-sm text-slate-300 mb-1">Eind Tijd</label>
-          <div
-              @click="showEndMenu = !showEndMenu; showStartMenu = false; showResourceMenu = false"
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 cursor-pointer flex justify-between items-center hover:border-slate-500 transition"
-              :class="{'border-blue-500 ring-1 ring-blue-500': showEndMenu}"
-          >
+          <div @click="showEndMenu = !showEndMenu; showStartMenu = false; showResourceMenu = false" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 cursor-pointer flex justify-between items-center hover:border-slate-500 transition" :class="{'border-blue-500 ring-1 ring-blue-500': showEndMenu}">
             <span>{{ form.endTime || '--:--' }}</span>
-            <svg class="h-3 w-3 fill-slate-400" viewBox="0 0 20 20">
-              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-            </svg>
+            <svg class="h-3 w-3 fill-slate-400" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
           </div>
-
-          <div
-              v-if="showEndMenu"
-              class="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg shadow-xl max-h-48 overflow-y-auto custom-scrollbar"
-          >
-            <div
-                v-for="time in timeSlots"
-                :key="time"
-                @click="selectEndTime(time)"
-                class="p-2 text-sm text-slate-300 hover:bg-blue-600 hover:text-white cursor-pointer transition-colors"
-                :class="{'bg-slate-700 text-white': form.endTime === time}"
-            >
-              {{ time }}
-            </div>
+          <div v-if="showEndMenu" class="absolute top-full left-0 mt-1 w-full bg-slate-800 border border-slate-600 rounded-lg shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+            <div v-for="time in timeSlots" :key="time" @click="selectEndTime(time)" class="p-2 text-sm text-slate-300 hover:bg-blue-600 hover:text-white cursor-pointer transition-colors" :class="{'bg-slate-700 text-white': form.endTime === time}">{{ time }}</div>
           </div>
         </div>
       </div>
 
-      <button
-          type="submit"
-          :disabled="isSubmitting"
-          class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-lg transition-colors mt-2 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      <button type="submit" :disabled="isSubmitting" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-lg transition-colors mt-2 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
         {{ isSubmitting ? 'Bezig met opslaan...' : 'Bevestig Reservatie' }}
       </button>
 
