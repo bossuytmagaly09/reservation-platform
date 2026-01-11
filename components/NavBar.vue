@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 // No logic changes needed
 </script>
 
@@ -22,7 +22,7 @@
       <!-- Left: Navigation Links -->
       <div class="flex items-center gap-2">
         <NuxtLink
-            to="/"
+            to="/resources"
             class="px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
             active-class="bg-slate-800 text-white shadow-sm"
             class-active="text-slate-400 hover:text-slate-200"
@@ -33,7 +33,7 @@
         <NuxtLink
             to="/reservations"
             class="px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-            active-class="bg-slate-800 text-white shadow-sm"
+            class-active="bg-slate-800 text-white shadow-sm"
         >
           Reservations
         </NuxtLink>
