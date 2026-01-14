@@ -7,7 +7,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import nlLocale from '@fullcalendar/core/locales/nl'
 
-const boardStore = useBoardStore()
+const boardStore = useBookingStore()
 const calendarRef = ref(null)
 
 // --- STATE MODAL ---
