@@ -11,6 +11,7 @@
 
     <div class="max-w-6xl mx-auto px-6 py-10">
 
+    <CalenderCard />
 
     <!-- LOADING -->
     <div v-if="loading" class="text-center py-20 text-[var(--color-text-muted)]">
@@ -48,11 +49,11 @@ useHead({
   ------------------
   Haalt alle reservaties op uit Supabase en geeft ze door aan
   ReservationsList.vue voor weergave.
-
-  Dit bestand blijft bewust "clean": enkel data ophalen + states.
+  
+  Real-time updates zijn ingeschakeld via Supabase subscriptions.
 */
 
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useSupabase } from '~/composables/useSupabase'
 import ReservationsList from '~/components/ReservationsList.vue'
 
@@ -60,37 +61,96 @@ import ReservationsList from '~/components/ReservationsList.vue'
 const reservations = ref([])
 const loading = ref(true)
 const error = ref(null)
+let subscription = null
 
 // Supabase client
 const supabase = useSupabase()
 
 // Data ophalen
 onMounted(async () => {
+  if (!supabase) {
+    error.value = 'Supabase is niet geconfigureerd'
+    loading.value = false
+    return
+  }
+
   try {
+    // Initiale data laden
     const { data, error: supaError } = await supabase
         .from('reservations')
         .select(`
-        id,
-        title,
-        start_time,
-        end_time,
-        resources_id,
-        users_id,
-        resources ( name ),
-        users:users ( first_name, last_name )
-      `)
+          id,
+          title,
+          start_time,
+          end_time,
+          resources_id,
+          users_id,
+          resources ( name ),
+          users:users ( first_name, last_name )
+        `)
 
     if (supaError) {
       error.value = 'Kon reservaties niet ophalen: ' + supaError.message
+      console.error('Supabase Error:', supaError)
       return
     }
 
     reservations.value = data
+    console.log('✓ Reservaties succesvol geladen:', data.length, 'items')
+
+    // Real-time subscription inschakelen
+    setupRealtimeSubscription()
 
   } catch (err) {
     error.value = 'Onverwachte fout: ' + err.message
+    console.error('Error:', err)
   } finally {
     loading.value = false
+  }
+})
+
+// Real-time updates opzetten
+const setupRealtimeSubscription = () => {
+  subscription = supabase
+    .channel('reservations-channel')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'reservations'
+      },
+      async (payload) => {
+        console.log('📡 Real-time update ontvangen:', payload.eventType)
+        
+        // Data opnieuw laden bij wijzigingen
+        const { data, error: supaError } = await supabase
+            .from('reservations')
+            .select(`
+              id,
+              title,
+              start_time,
+              end_time,
+              resources_id,
+              users_id,
+              resources ( name ),
+              users:users ( first_name, last_name )
+            `)
+
+        if (!supaError) {
+          reservations.value = data
+          console.log('✓ Data vernieuwd:', data.length, 'items')
+        }
+      }
+    )
+    .subscribe()
+}
+
+// Cleanup bij unload
+onUnmounted(() => {
+  if (subscription) {
+    supabase.removeChannel(subscription)
+    console.log('🔌 Real-time subscription beëindigd')
   }
 })
 

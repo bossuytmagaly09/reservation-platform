@@ -36,7 +36,7 @@ const toggleTheme = () => {
 
         <NuxtLink
             to="/resources"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-slate-400 hover:text-slate-200"
+            class="px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
             active-class="bg-slate-800 text-white shadow-sm"
         >
           Resources
@@ -48,6 +48,14 @@ const toggleTheme = () => {
             active-class="bg-slate-800 text-white shadow-sm"
         >
           Reservations
+        </NuxtLink>
+
+       <NuxtLink
+            to="/kalender"
+            class="px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+            active-class="bg-slate-800 text-white shadow-sm"
+        >
+          Kalender
         </NuxtLink>
 
 

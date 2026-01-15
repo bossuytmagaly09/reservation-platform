@@ -1,39 +1,18 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useSupabase } from '~/composables/useSupabase'
+import { computed } from 'vue'
 import ReservationsCard from '~/components/ReservationsCard.vue'
 
-// Reactive variabelen
-const reservations = ref([])
-const loading = ref(true)
-const error = ref(null)
-
-// Supabase client ophalen
-const supabase = useSupabase()
-
-// Data ophalen bij het laden van de pagina
-onMounted(async () => {
-  try {
-    const { data, error: supaError } = await supabase
-        .from('reservations') .select(` id, title, start_time, end_time, resources_id, users_id, resources ( name ), users:users ( first_name, last_name ) `)
-
-    if (supaError) {
-      error.value = 'Kon reservaties niet ophalen: ' + supaError.message
-      return
-    }
-
-    reservations.value = data
-
-  } catch (err) {
-    error.value = 'Onverwachte fout: ' + err.message
-  } finally {
-    loading.value = false
+// Props van parent component (reservations.vue)
+const props = defineProps({
+  items: {
+    type: Array,
+    required: true
   }
 })
 
-// Sorteren op start_time
+// Props gebruiken - geen dubbele data fetching meer
 const sortedReservations = computed(() => {
-  return [...reservations.value].sort((a, b) => {
+  return [...props.items].sort((a, b) => {
     return new Date(a.start_time) - new Date(b.start_time)
   })
 })
@@ -57,7 +36,7 @@ const sortedReservations = computed(() => {
     </div>
 
     <!-- LIST -->
-    <div v-else class="space-y-1">
+    <div v-else class="space-y-2">
       <ReservationsCard
           v-for="(item, index) in sortedReservations"
           :key="item.id"
