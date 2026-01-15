@@ -1,8 +1,8 @@
-// src/stores/bookingStore.js
 import { defineStore } from 'pinia'
-// LET OP: Geen import meer van supabase hierboven!
+// Als je useSupabase niet automatisch hebt via Nuxt, uncomment dan de volgende regel:
+// import { useSupabase } from '@/composables/useSupabase'
 
-export const useBookingStore = defineStore('booking', {
+export const useDataStore = defineStore('dataStore', {
     state: () => ({
         resources: [],
         reservations: [],
@@ -12,7 +12,6 @@ export const useBookingStore = defineStore('booking', {
 
     actions: {
         async fetchResources() {
-            // 1. Haal de supabase client op via de composable van je collega
             const supabase = useSupabase()
 
             if (!supabase) {
@@ -22,12 +21,19 @@ export const useBookingStore = defineStore('booking', {
 
             this.loading = true
             try {
+                // We halen resources op INCLUSIEF de count van de reservaties
                 const { data, error } = await supabase
                     .from('resources')
-                    .select('*')
+                    .select('*, reservations(count)')
 
                 if (error) throw error
-                this.resources = data
+
+                // Data mappen zodat 'reservation_count' beschikbaar is voor je kaartjes
+                this.resources = data.map(res => ({
+                    ...res,
+                    reservation_count: res.reservations?.[0]?.count || 0
+                }))
+
             } catch (err) {
                 this.error = err.message
                 console.error('Error fetching resources:', err)
@@ -37,7 +43,7 @@ export const useBookingStore = defineStore('booking', {
         },
 
         async fetchReservations() {
-            const supabase = useSupabase() // <--- Hier ook toevoegen
+            const supabase = useSupabase()
 
             if (!supabase) return
 
@@ -45,7 +51,7 @@ export const useBookingStore = defineStore('booking', {
             try {
                 const { data, error } = await supabase
                     .from('reservations')
-                    .select('*')
+                    .select('*, resources(name)')
 
                 if (error) throw error
                 this.reservations = data
@@ -57,8 +63,25 @@ export const useBookingStore = defineStore('booking', {
             }
         },
 
-        async fetchAllData() {
-            await Promise.all([this.fetchResources(), this.fetchReservations()])
+        // DEZE FUNCTIE ZORGT DAT JE KAN OPSLAAN
+        async createReservation(payload) {
+            const supabase = useSupabase()
+
+            if (!supabase) return { success: false, error: { message: "Geen database verbinding" } }
+
+            const { error } = await supabase
+                .from('reservations')
+                .insert([payload])
+
+            if (error) {
+                return { success: false, error }
+            }
+
+            // Ververs meteen de data zodat je de nieuwe reservatie direct ziet
+            await this.fetchReservations()
+            await this.fetchResources()
+
+            return { success: true }
         }
     }
 })

@@ -1,16 +1,20 @@
 <template>
-  <div class="space-y-6 page-anim">
+  <div class="space-y-6">
 
-    <div class="max-w-7xl mx-auto px-6 pt-10">
-      <h1 class="text-2xl font-semibold text-white">Reservations</h1>
+    <div class="flex justify-between items-end px-1">
+      <div>
+        <h1 class="text-2xl font-semibold text-white">Reservations</h1>
+        <p class="text-slate-400 text-sm mt-1">Beheer hier alle reservaties.</p>
+      </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-6 pb-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
-      <div class="lg:col-span-2 space-y-8">
+      <div class="lg:col-span-2 space-y-6">
+
         <CalenderCard />
 
-        <div v-if="loading" class="text-center py-20 text-[var(--color-text-muted)]">
+        <div v-if="loading" class="text-center py-20 text-slate-400">
           ⏳ Reservaties laden...
         </div>
 
@@ -18,15 +22,13 @@
           ❌ {{ error }}
         </div>
 
-        <div v-else-if="sortedReservations.length === 0"
-             class="text-center py-20 text-[var(--color-text-muted)]">
+        <div v-else-if="sortedReservations.length === 0" class="text-center py-20 text-slate-500">
           Geen reservaties gevonden.
         </div>
 
-        <ReservationsList
-            v-else
-            :items="sortedReservations"
-        />
+        <div v-else>
+          <ReservationsList :items="sortedReservations" />
+        </div>
       </div>
 
       <div class="lg:col-span-1">
@@ -40,36 +42,48 @@
 </template>
 
 <script setup>
-useHead({ title: 'Reservations - App' })
-
 import { ref, onMounted, computed } from 'vue'
 import { useSupabase } from '~/composables/useSupabase'
-// Controleer of deze bestandsnaam EXACT klopt in je map:
+
+// IMPORTS: Deze moeten EXACT matchen met je bestandsnamen
 import ReservationsList from '~/components/ReservationsList.vue'
 import NewReservations from '~/components/NewReservations.vue'
+import CalenderCard from '~/components/CalenderCard.vue'
 
+useHead({ title: 'Reservations - App' })
+
+// STATE
 const reservations = ref([])
 const loading = ref(true)
 const error = ref(null)
+
 const supabase = useSupabase()
 
+// DATA OPHALEN
 const fetchReservations = async () => {
+  if (!supabase) {
+    error.value = "Database connectie mislukt"
+    return
+  }
+
   loading.value = true
   try {
     const { data, error: supaError } = await supabase
-        .from('reservations')
+        .from('reservations') // Database tabel naam (kleine letters, met s)
         .select(`
-        id, title, start_time, end_time, resources_id, users_id,
+        *,
         resources ( name ),
-        users:users ( first_name, last_name )
+        users ( first_name, last_name )
       `)
 
     if (supaError) throw supaError
+
     reservations.value = data || []
     error.value = null
+
   } catch (err) {
-    console.error("Supabase Error:", err) // Log naar console zodat je het ziet
     error.value = 'Fout: ' + err.message
+    console.error(err)
   } finally {
     loading.value = false
   }
@@ -79,13 +93,16 @@ onMounted(() => {
   fetchReservations()
 })
 
+// SORTEREN
 const sortedReservations = computed(() => {
-  return [...reservations.value].sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
+  return [...reservations.value].sort((a, b) => {
+    return new Date(a.start_time) - new Date(b.start_time)
+  })
 })
 </script>
 
 <style scoped>
-.page-anim {
+div {
   animation: fadeIn 0.4s ease-out;
 }
 
