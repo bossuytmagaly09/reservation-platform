@@ -1,10 +1,11 @@
 <script setup>
-// 1. Importeer de juiste store (matcht met bestandsnaam)
-import { useDataStore } from '@/stores/useDataStore'
+import {useSupabase} from '~/composables/useSupabase'
 import { computed, reactive, ref, onMounted } from 'vue'
 
-// 2. Gebruik de store
-const dataStore = useDataStore()
+// Emit toevoegen om de pagina te laten weten dat het gelukt is
+const emit = defineEmits(['success'])
+
+const dataStore = useSupabase()
 
 // --- STATE ---
 const showResourceMenu = ref(false)
@@ -37,13 +38,11 @@ const generateTimeSlots = () => {
 
 onMounted(async () => {
   generateTimeSlots()
-  // 3. Roep de actie aan op de dataStore
   await dataStore.fetchResources()
 })
 
 // --- COMPUTED ---
 const selectedResource = computed(() => {
-  // 4. Check dataStore resources
   if (!dataStore.resources) return null
   return dataStore.resources.find(r => r.id === form.resourceId)
 })
@@ -70,7 +69,6 @@ const closeAllMenus = () => {
   showEndMenu.value = false
 }
 
-// Datum picker fix
 const openDatePicker = (event) => {
   try {
     if (event.target && typeof event.target.showPicker === 'function') {
@@ -80,53 +78,54 @@ const openDatePicker = (event) => {
     console.log("Browser ondersteunt showPicker niet.")
   }
 }
-// al een begin voor de fucntie om de submit knop te doen werken
-// // --- SUBMIT ---
-// const handleSubmit = async () => {
-//   if (!form.resourceId || !form.title || !form.startDate || !form.endDate || !form.startTime || !form.endTime) {
-//     alert('Vul alle verplichte velden in.')
-//     return
-//   }
-//
-//   const startFull = new Date(`${form.startDate}T${form.startTime}`)
-//   const endFull = new Date(`${form.endDate}T${form.endTime}`)
-//
-//   if (endFull <= startFull) {
-//     alert('Het eindmoment moet later zijn dan het startmoment.')
-//     return
-//   }
-//
-//   isSubmitting.value = true
-//
-//   const payload = {
-//     title: form.title,
-//     resourceId: form.resourceId,
-//     startDate: form.startDate,
-//     endDate: form.endDate,
-//     startTime: form.startTime,
-//     endTime: form.endTime
-//   }
-//
-//   // 5. Gebruik de dataStore functie
-//   const result = await dataStore.createReservation(payload)
-//
-//   if (result.success) {
-//     alert('Reservatie succesvol opgeslagen!')
-//     form.title = ''
-//     form.description = ''
-//     form.startDate = ''
-//     form.endDate = ''
-//     form.startTime = ''
-//     form.endTime = ''
-//     form.resourceId = null
-//   } else {
-//     alert('Fout bij opslaan: ' + (result.error?.message || 'Onbekende fout'))
-//   }
-//   isSubmitting.value = false
-// }
+
+// --- SUBMIT (Code actief gemaakt) ---
+const handleSubmit = async () => {
+  if (!form.resourceId || !form.title || !form.startDate || !form.endDate || !form.startTime || !form.endTime) {
+    alert('Vul alle verplichte velden in.')
+    return
+  }
+
+  const startFull = new Date(`${form.startDate}T${form.startTime}`)
+  const endFull = new Date(`${form.endDate}T${form.endTime}`)
+
+  if (endFull <= startFull) {
+    alert('Het eindmoment moet later zijn dan het startmoment.')
+    return
+  }
+
+  isSubmitting.value = true
+
+  const payload = {
+    title: form.title,
+    resource_id: form.resourceId, // Let op: snake_case voor Supabase
+    start_time: startFull.toISOString(),
+    end_time: endFull.toISOString(),
+  }
+
+  const result = await dataStore.createReservation(payload)
+
+  if (result.success) {
+    // Reset formulier
+    form.title = ''
+    form.description = ''
+    form.startDate = ''
+    form.endDate = ''
+    form.startTime = ''
+    form.endTime = ''
+    form.resourceId = null
+
+    // Refresh de pagina data
+    emit('success')
+  } else {
+    alert('Fout bij opslaan: ' + (result.error?.message || 'Onbekende fout'))
+  }
+  isSubmitting.value = false
+}
 </script>
 
 <template>
+  <div>
   <div
       v-if="showResourceMenu || showStartMenu || showEndMenu"
       @click="closeAllMenus"
@@ -231,5 +230,6 @@ const openDatePicker = (event) => {
       </button>
 
     </form>
+  </div>
   </div>
 </template>

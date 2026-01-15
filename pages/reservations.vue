@@ -1,110 +1,91 @@
 <template>
-  <div class="space-y-6">
-    <!-- TITEL -->
-    <div>
+  <div class="space-y-6 page-anim">
+
+    <div class="max-w-7xl mx-auto px-6 pt-10">
       <h1 class="text-2xl font-semibold text-white">Reservations</h1>
-      <!--
-      <p class="text-slate-400 text-sm mt-1">Het kader hieronder is een tijdelijke placeholder ter illustratie.</p>
-      -->
     </div>
 
+    <div class="max-w-7xl mx-auto px-6 pb-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
-    <div class="max-w-6xl mx-auto px-6 py-10">
+      <div class="lg:col-span-2 space-y-8">
+        <CalenderCard />
 
-    <CalenderCard />
+        <div v-if="loading" class="text-center py-20 text-[var(--color-text-muted)]">
+          ⏳ Reservaties laden...
+        </div>
 
-    <!-- LOADING -->
-    <div v-if="loading" class="text-center py-20 text-[var(--color-text-muted)]">
-      ⏳ Reservaties laden...
+        <div v-else-if="error" class="text-center py-20 text-red-500 font-medium">
+          ❌ {{ error }}
+        </div>
+
+        <div v-else-if="sortedReservations.length === 0"
+             class="text-center py-20 text-[var(--color-text-muted)]">
+          Geen reservaties gevonden.
+        </div>
+
+        <ReservationsList
+            v-else
+            :items="sortedReservations"
+        />
+      </div>
+
+      <div class="lg:col-span-1">
+        <div class="sticky top-6">
+          <NewReservations @success="fetchReservations" />
+        </div>
+      </div>
+
     </div>
-
-    <!-- ERROR -->
-    <div v-else-if="error" class="text-center py-20 text-red-500 font-medium">
-      ❌ {{ error }}
-    </div>
-
-    <!-- EMPTY -->
-    <div v-else-if="sortedReservations.length === 0"
-         class="text-center py-20 text-[var(--color-text-muted)]">
-      Geen reservaties gevonden.
-    </div>
-
-    <!-- LIST COMPONENT -->
-    <ReservationsList
-        v-else
-        :items="sortedReservations"
-    />
   </div>
-  </div>
-
 </template>
 
-
 <script setup>
-useHead({
-  title: 'Reservations - App',
-})
-/*
-  Reservations Page
-  ------------------
-  Haalt alle reservaties op uit Supabase en geeft ze door aan
-  ReservationsList.vue voor weergave.
-
-  Dit bestand blijft bewust "clean": enkel data ophalen + states.
-*/
+useHead({ title: 'Reservations - App' })
 
 import { ref, onMounted, computed } from 'vue'
 import { useSupabase } from '~/composables/useSupabase'
+// Controleer of deze bestandsnaam EXACT klopt in je map:
 import ReservationsList from '~/components/ReservationsList.vue'
+import NewReservations from '~/components/NewReservations.vue'
 
-// Reactive variabelen
 const reservations = ref([])
 const loading = ref(true)
 const error = ref(null)
-
-// Supabase client
 const supabase = useSupabase()
 
-// Data ophalen
-onMounted(async () => {
+const fetchReservations = async () => {
+  loading.value = true
   try {
     const { data, error: supaError } = await supabase
         .from('reservations')
         .select(`
-        id,
-        title,
-        start_time,
-        end_time,
-        resources_id,
-        users_id,
+        id, title, start_time, end_time, resources_id, users_id,
         resources ( name ),
         users:users ( first_name, last_name )
       `)
 
-    if (supaError) {
-      error.value = 'Kon reservaties niet ophalen: ' + supaError.message
-      return
-    }
-
-    reservations.value = data
-
+    if (supaError) throw supaError
+    reservations.value = data || []
+    error.value = null
   } catch (err) {
-    error.value = 'Onverwachte fout: ' + err.message
+    console.error("Supabase Error:", err) // Log naar console zodat je het ziet
+    error.value = 'Fout: ' + err.message
   } finally {
     loading.value = false
   }
+}
+
+onMounted(() => {
+  fetchReservations()
 })
 
-// Sorteren op start_time
 const sortedReservations = computed(() => {
-  return [...reservations.value].sort((a, b) => {
-    return new Date(a.start_time) - new Date(b.start_time)
-  })
+  return [...reservations.value].sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
 })
 </script>
 
 <style scoped>
-div {
+.page-anim {
   animation: fadeIn 0.4s ease-out;
 }
 
