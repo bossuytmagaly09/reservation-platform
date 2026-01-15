@@ -1,60 +1,43 @@
 <template>
-  <!-- Hoofdcontainer van de kaart -->
   <div
-      class="flex items-center gap-4 bg-slate-800 rounded-xl border border-slate-700/60 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer p-4"
+      class="group bg-slate-800 rounded-xl border border-slate-700/60 shadow-md hover:shadow-xl hover:border-slate-600 transition-all duration-300 cursor-pointer p-5 flex items-center justify-between gap-4"
   >
-    <!-- Linkerzijde: pictogram of afbeelding -->
-    <!-- Injecteer SVG en geef wit mee via CSS -->
-    <div
-        class="icon-wrapper text-white w-16 h-16 flex items-center justify-center bg-slate-700/40 rounded-md"
-        v-html="icon"
-    />
 
+    <div class="flex items-center gap-4 overflow-hidden">
 
-    <!-- Rechterzijde: inhoud van de kaart -->
-    <div class="flex flex-col justify-between w-full space-y-2">
+      <div
+          class="shrink-0 w-16 h-16 rounded-lg bg-slate-700/80 flex items-center justify-center text-slate-400 group-hover:bg-blue-600/20 group-hover:text-blue-400 transition-colors"
+      >
+        <div
+            v-html="icon"
+            class="force-icon-color w-8 h-8 flex items-center justify-center"
+        />
+      </div>
 
-      <!-- Titel en type badge -->
-      <div class="flex justify-between items-center">
-        <!-- Naam van de resource -->
-        <h3 class="text-slate-100 font-semibold text-base truncate">
+      <div class="flex flex-col min-w-0">
+        <h3 class="text-white font-semibold text-lg truncate leading-tight mb-1">
           {{ name }}
         </h3>
 
-        <!-- Type badge (bv. 'ruimte', 'materiaal') -->
-        <span
-            class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-600/10 text-cyan-400
-                 border border-cyan-500/30 uppercase tracking-wide font-medium"
-        >
-          {{ type }}
-        </span>
+        <p class="text-sm text-slate-400 leading-snug line-clamp-2">
+          {{ description }}
+        </p>
       </div>
-
-      <!-- Beschrijving van de resource -->
-      <p class="text-sm text-slate-400 leading-snug line-clamp-2">
-        {{ description }}
-      </p>
-
-      <!-- Reservatie-info -->
-      <div class="flex items-center gap-2 text-xs text-slate-500">
-        <!-- Kalendericoon -->
-        <i class="ph ph-calendar text-cyan-400"></i>
-
-        <!-- Aantal reservaties -->
-        <span>
-          {{ reservation_count }} reservatie{{ reservation_count === 1 ? '' : 's' }}
-        </span>
-      </div>
-
     </div>
+
+    <div class="flex flex-col items-center justify-center pl-6 border-l border-slate-700/50 shrink-0 min-w-[90px]">
+      <span class="text-3xl font-bold text-slate-200 group-hover:text-blue-400 transition-colors">
+        {{ reservation_count }}
+      </span>
+      <span class="text-[10px] uppercase tracking-wider text-slate-500 font-medium mt-1">
+        Reservations
+      </span>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-/**
- * Props worden meegegeven door de oudercomponent.
- * Ze bevatten de data van één resource-item.
- */
 defineProps({
   id: [Number, String],
   name: String,
@@ -69,13 +52,10 @@ defineProps({
 </script>
 
 <style scoped>
-/* Fade-in animatie bij laden van de kaart */
-div {
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Forceer de kleur van de SVG naar de tekstkleur */
+.force-icon-color :deep(svg),
+.force-icon-color :deep(path) {
+  fill: currentColor !important;
+  stroke: none !important;
 }
 </style>
