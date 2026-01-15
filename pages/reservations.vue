@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-8">
 
     <div class="flex justify-between items-end px-1">
       <div>
@@ -8,32 +8,34 @@
       </div>
     </div>
 
+    <div class="w-full">
+      <CalenderCard />
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+      <div class="lg:col-span-1">
+        <div class="sticky top-6">
+          <NewReservations @success="fetchReservations" />
+        </div>
+      </div>
 
       <div class="lg:col-span-2 space-y-6">
 
-        <CalenderCard />
-
-        <div v-if="loading" class="text-center py-20 text-slate-400">
+        <div v-if="loading" class="text-center py-20 text-slate-400 bg-slate-800/30 rounded-lg border border-slate-700/50">
           ⏳ Reservaties laden...
         </div>
 
-        <div v-else-if="error" class="text-center py-20 text-red-500 font-medium">
+        <div v-else-if="error" class="text-center py-20 text-red-500 font-medium bg-red-900/10 rounded-lg border border-red-500/20">
           ❌ {{ error }}
         </div>
 
-        <div v-else-if="sortedReservations.length === 0" class="text-center py-20 text-slate-500">
+        <div v-else-if="sortedReservations.length === 0" class="text-center py-20 text-slate-500 bg-slate-800/30 rounded-lg border border-slate-700/50">
           Geen reservaties gevonden.
         </div>
 
         <div v-else>
           <ReservationsList :items="sortedReservations" />
-        </div>
-      </div>
-
-      <div class="lg:col-span-1">
-        <div class="sticky top-6">
-          <NewReservations @success="fetchReservations" />
         </div>
       </div>
 
@@ -45,7 +47,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useSupabase } from '~/composables/useSupabase'
 
-// IMPORTS: Deze moeten EXACT matchen met je bestandsnamen
+// IMPORTS
 import ReservationsList from '~/components/ReservationsList.vue'
 import NewReservations from '~/components/NewReservations.vue'
 import CalenderCard from '~/components/CalenderCard.vue'
@@ -69,7 +71,7 @@ const fetchReservations = async () => {
   loading.value = true
   try {
     const { data, error: supaError } = await supabase
-        .from('reservations') // Database tabel naam (kleine letters, met s)
+        .from('reservations')
         .select(`
         *,
         resources ( name ),
@@ -102,7 +104,8 @@ const sortedReservations = computed(() => {
 </script>
 
 <style scoped>
-div {
+/* Kleine toevoeging: animation ook toepassen op grid items voor soepele inlaad ervaring */
+.grid > div, .space-y-8 > div {
   animation: fadeIn 0.4s ease-out;
 }
 

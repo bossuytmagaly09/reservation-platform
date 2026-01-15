@@ -19,7 +19,7 @@ const sortedReservations = computed(() => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-6 py-10">
+  <div class="max-w-4xl mx-auto">
     <!-- LOADING -->
     <div v-if="loading" class="text-center py-20 text-[var(--color-text-muted)]">
       ⏳ Reservaties laden...
