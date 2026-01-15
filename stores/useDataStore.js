@@ -1,21 +1,20 @@
 import { defineStore } from 'pinia'
-// BELANGRIJK: We importeren jouw custom composable hier expliciet
+// We behouden de expliciete import uit Versie 1, omdat dit veiliger is als je een custom path hebt
 import { useSupabase } from '@/composables/useSupabase'
 
 export const useDataStore = defineStore('dataStore', {
     state: () => ({
         resources: [],
-        types: [],
+        reservations: [], // Toegevoegd uit V2
+        types: [],        // Toegevoegd uit V1
         loading: false,
         error: null
     }),
 
     actions: {
-        // 1. Resources ophalen
+        // --- 1. Resources ophalen (Gebaseerd op V2 voor de juiste count logica) ---
         async fetchResources() {
-            // We gebruiken JOUW versie van useSupabase
             const supabase = useSupabase()
-
 
             if (!supabase) {
                 this.error = "Supabase niet beschikbaar"
@@ -24,20 +23,20 @@ export const useDataStore = defineStore('dataStore', {
 
             this.loading = true
             try {
+                // We halen resources op INCLUSIEF de count van de reservaties
+                // Dit vervangt de query van V1 die inconsistent was met de mapping
                 const { data, error } = await supabase
                     .from('resources')
-                    .select(`
-                        *,
-                        resources ( name ),
-                        users ( first_name, last_name )
-                    `)
+                    .select('*, reservations(count)')
 
                 if (error) throw error
+
+                // Data mappen zodat 'reservation_count' beschikbaar is
                 this.resources = data.map(res => ({
                     ...res,
-                    // Als er reservaties zijn, pak de count, anders 0
                     reservation_count: res.reservations?.[0]?.count || 0
                 }))
+
             } catch (err) {
                 this.error = err.message
                 console.error('Error fetching resources:', err)
@@ -46,34 +45,33 @@ export const useDataStore = defineStore('dataStore', {
             }
         },
 
+        // --- 2. Reservaties ophalen (Gebaseerd op V2 - V1 was hier kapot) ---
         async fetchReservations() {
-            const supabase = useSupabase() // <--- Hier ook toevoegen
-
+            const supabase = useSupabase()
 
             if (!supabase) return
 
             this.loading = true
             try {
                 const { data, error } = await supabase
-                    .from('resources')
-                    .select('*, reservations(count)')
+                    .from('reservations')
+                    .select('*, resources(name)')
 
                 if (error) throw error
 
-                this.resources = data.map(res => ({
-                    ...res,
-                    reservation_count: res.reservations?.[0]?.count || 0
-                }))
+                // We slaan dit op in reservations, NIET in resources (zoals V1 foutief deed)
+                this.reservations = data
             } catch (err) {
-                console.error('Error fetching resources:', err)
+                this.error = err.message
+                console.error('Error fetching reservations:', err)
             } finally {
                 this.loading = false
             }
         },
 
-        // 2. Types ophalen
+        // --- 3. Types ophalen (Behouden uit V1) ---
         async fetchTypes() {
-            const supabase = useSupabase() // Aangepast naar jouw composable
+            const supabase = useSupabase()
 
             if (!supabase) return
 
@@ -86,9 +84,9 @@ export const useDataStore = defineStore('dataStore', {
             }
         },
 
-        // 3. Resource aanmaken
+        // --- 4. Resource aanmaken (Behouden uit V1) ---
         async createResource(payload) {
-            const supabase = useSupabase() // Aangepast naar jouw composable
+            const supabase = useSupabase()
 
             if (!supabase) return { success: false, error: { message: "Geen database verbinding" } }
 
@@ -111,17 +109,26 @@ export const useDataStore = defineStore('dataStore', {
             return { success: true }
         },
 
-        // 4. Reservatie aanmaken
+        // --- 5. Reservatie aanmaken (Gebaseerd op V2 voor betere refresh) ---
         async createReservation(payload) {
-            const supabase = useSupabase() // Aangepast naar jouw composable
+            const supabase = useSupabase()
 
             if (!supabase) return { success: false, error: { message: "Geen database verbinding" } }
 
-            const { error } = await supabase.from('reservations').insert([payload])
+            const { error } = await supabase
+                .from('reservations')
+                .insert([payload])
 
-            if (error) return { success: false, error }
+            if (error) {
+                return { success: false, error }
+            }
 
-            await this.fetchResources()
+            // Ververs ALLES (zowel de reservatielijst als de resource counts)
+            await Promise.all([
+                this.fetchReservations(),
+                this.fetchResources()
+            ])
+
             return { success: true }
         }
     }
