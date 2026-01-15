@@ -24,10 +24,18 @@ export const useBookingStore = defineStore('booking', {
             try {
                 const { data, error } = await supabase
                     .from('resources')
-                    .select('*')
+                    .select(`
+                        *,
+                        resources ( name ),
+                        users ( first_name, last_name )
+                    `)
 
                 if (error) throw error
-                this.resources = data
+                this.resources = data.map(res => ({
+                    ...res,
+                    // Als er reservaties zijn, pak de count, anders 0
+                    reservation_count: res.reservations?.[0]?.count || 0
+                }))
             } catch (err) {
                 this.error = err.message
                 console.error('Error fetching resources:', err)

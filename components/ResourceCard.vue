@@ -56,12 +56,15 @@
  * Ze bevatten de data van één resource-item.
  */
 defineProps({
-  id: [Number, String],           // Unieke ID van de resource
-  name: String,                   // Naam van de resource
-  type: String,                   // Type (bv. ruimte, materiaal)
-  description: String,           // Korte beschrijving
-  icon: String,                   // URL naar afbeelding of pictogram
-  reservation_count: Number      // Aantal reservaties
+  id: [Number, String],
+  name: String,
+  type: String,
+  description: String,
+  icon: String,
+  reservation_count: {
+    type: Number,
+    default: 0
+  }
 })
 </script>
 

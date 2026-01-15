@@ -47,7 +47,7 @@
           :type="resource.type"
           :description="resource.description"
           :icon="resource.icon"
-          :reservation_count="resource.reservation_count"
+          :reservation_count="resource.reservations?.[0]?.count || resource.reservation_count || 0"
       />
     </div>
 
