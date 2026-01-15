@@ -1,101 +1,99 @@
 <template>
   <div class="space-y-6">
-    <!-- TITEL -->
-    <div>
-      <h1 class="text-2xl font-semibold text-white">Reservations</h1>
-      <!--
-      <p class="text-slate-400 text-sm mt-1">Het kader hieronder is een tijdelijke placeholder ter illustratie.</p>
-      -->
+
+    <div class="flex justify-between items-end px-1">
+      <div>
+        <h1 class="text-2xl font-semibold text-white">Reservations</h1>
+        <p class="text-slate-400 text-sm mt-1">Beheer hier alle reservaties.</p>
+      </div>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
-    <div class="max-w-6xl mx-auto px-6 py-10">
+      <div class="lg:col-span-2 space-y-6">
 
-    <CalenderCard />
+        <CalenderCard />
 
-    <!-- LOADING -->
-    <div v-if="loading" class="text-center py-20 text-[var(--color-text-muted)]">
-      ⏳ Reservaties laden...
+        <div v-if="loading" class="text-center py-20 text-slate-400">
+          ⏳ Reservaties laden...
+        </div>
+
+        <div v-else-if="error" class="text-center py-20 text-red-500 font-medium">
+          ❌ {{ error }}
+        </div>
+
+        <div v-else-if="sortedReservations.length === 0" class="text-center py-20 text-slate-500">
+          Geen reservaties gevonden.
+        </div>
+
+        <div v-else>
+          <ReservationsList :items="sortedReservations" />
+        </div>
+      </div>
+
+      <div class="lg:col-span-1">
+        <div class="sticky top-6">
+          <NewReservations @success="fetchReservations" />
+        </div>
+      </div>
+
     </div>
-
-    <!-- ERROR -->
-    <div v-else-if="error" class="text-center py-20 text-red-500 font-medium">
-      ❌ {{ error }}
-    </div>
-
-    <!-- EMPTY -->
-    <div v-else-if="sortedReservations.length === 0"
-         class="text-center py-20 text-[var(--color-text-muted)]">
-      Geen reservaties gevonden.
-    </div>
-
-    <!-- LIST COMPONENT -->
-    <ReservationsList
-        v-else
-        :items="sortedReservations"
-    />
   </div>
-  </div>
-
 </template>
 
-
 <script setup>
-useHead({
-  title: 'Reservations - App',
-})
-/*
-  Reservations Page
-  ------------------
-  Haalt alle reservaties op uit Supabase en geeft ze door aan
-  ReservationsList.vue voor weergave.
-
-  Dit bestand blijft bewust "clean": enkel data ophalen + states.
-*/
-
 import { ref, onMounted, computed } from 'vue'
 import { useSupabase } from '~/composables/useSupabase'
-import ReservationsList from '~/components/ReservationsList.vue'
 
-// Reactive variabelen
+// IMPORTS: Deze moeten EXACT matchen met je bestandsnamen
+import ReservationsList from '~/components/ReservationsList.vue'
+import NewReservations from '~/components/NewReservations.vue'
+import CalenderCard from '~/components/CalenderCard.vue'
+
+useHead({ title: 'Reservations - App' })
+
+// STATE
 const reservations = ref([])
 const loading = ref(true)
 const error = ref(null)
 
-// Supabase client
 const supabase = useSupabase()
 
-// Data ophalen
-onMounted(async () => {
+// DATA OPHALEN
+const fetchReservations = async () => {
+  if (!supabase) {
+    error.value = "Database connectie mislukt"
+    return
+  }
+
+  loading.value = true
   try {
     const { data, error: supaError } = await supabase
-        .from('reservations')
+        .from('reservations') // Database tabel naam (kleine letters, met s)
         .select(`
-        id,
-        title,
-        start_time,
-        end_time,
-        resources_id,
-        users_id,
+        *,
         resources ( name ),
-        users:users ( first_name, last_name )
+        users ( first_name, last_name )
       `)
 
-    if (supaError) {
-      error.value = 'Kon reservaties niet ophalen: ' + supaError.message
-      return
-    }
+    if (supaError) throw supaError
 
-    reservations.value = data
+    reservations.value = data || []
+    error.value = null
 
   } catch (err) {
-    error.value = 'Onverwachte fout: ' + err.message
+    error.value = 'Fout: ' + err.message
+    console.error(err)
   } finally {
     loading.value = false
   }
+}
+
+onMounted(() => {
+  fetchReservations()
 })
 
-// Sorteren op start_time
+// SORTEREN
 const sortedReservations = computed(() => {
   return [...reservations.value].sort((a, b) => {
     return new Date(a.start_time) - new Date(b.start_time)
