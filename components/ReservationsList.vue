@@ -7,6 +7,14 @@ const props = defineProps({
   items: {
     type: Array,
     required: true
+  },
+  loading: { // Ik heb deze prop toegevoegd zodat v-if="loading" werkt, of haal je die uit een store?
+    type: Boolean,
+    default: false
+  },
+  error: {   // Hetzelfde voor error
+    type: String,
+    default: null
   }
 })
 
@@ -19,24 +27,21 @@ const sortedReservations = computed(() => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto">
-    <!-- LOADING -->
-    <div v-if="loading" class="text-center py-20 text-[var(--color-text-muted)]">
+  <div class="max-w-4xl mx-auto bg-slate-800 border border-slate-700 rounded-2xl shadow-xl p-6 text-white">
+
+    <div v-if="loading" class="text-center py-20 text-slate-400">
       ⏳ Reservaties laden...
     </div>
 
-    <!-- ERROR -->
-    <div v-else-if="error" class="text-center py-20 text-red-500 font-medium">
+    <div v-else-if="error" class="text-center py-20 text-red-400 font-medium">
       ❌ {{ error }}
     </div>
 
-    <!-- EMPTY -->
-    <div v-else-if="sortedReservations.length === 0" class="text-center py-20 text-[var(--color-text-muted)]">
+    <div v-else-if="sortedReservations.length === 0" class="text-center py-20 text-slate-400">
       Geen reservaties gevonden.
     </div>
 
-    <!-- LIST -->
-    <div v-else class="space-y-2">
+    <div v-else class="space-y-4">
       <ReservationsCard
           v-for="(item, index) in sortedReservations"
           :key="item.id"
