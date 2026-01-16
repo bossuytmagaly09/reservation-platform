@@ -7,7 +7,7 @@ import { computed, reactive, ref, onMounted } from 'vue'
 
 const emit = defineEmits(['success'])
 
-// 2. INITIALISATIE (We gebruiken ze allebei)
+// 2. INITIALISATIE
 const supabase = useSupabase()   // Voor het opslaan (submit)
 const dataStore = useDataStore() // Voor de dropdown lijst (resources)
 
@@ -29,6 +29,24 @@ const form = reactive({
 const isSubmitting = ref(false)
 const timeSlots = ref([])
 
+// --- COMPUTED VALIDATIE (NIEUW) ---
+// Geeft true terug als alle verplichte velden gevuld zijn
+const isFormValid = computed(() => {
+  return (
+      form.title.trim() !== '' &&
+      form.resourceId !== null &&
+      form.startDate !== '' &&
+      form.endDate !== '' &&
+      form.startTime !== '' &&
+      form.endTime !== ''
+  )
+})
+
+const selectedResource = computed(() => {
+  if (!dataStore.resources) return null
+  return dataStore.resources.find(r => r.id === form.resourceId)
+})
+
 // --- INITIALISATIE ---
 const generateTimeSlots = () => {
   const slots = []
@@ -42,14 +60,8 @@ const generateTimeSlots = () => {
 
 onMounted(async () => {
   generateTimeSlots()
-  // We gebruiken de STORE om de lijst op te halen (dit repareert je dropdown)
+  // We gebruiken de STORE om de lijst op te halen
   await dataStore.fetchResources()
-})
-
-// --- COMPUTED ---
-const selectedResource = computed(() => {
-  if (!dataStore.resources) return null
-  return dataStore.resources.find(r => r.id === form.resourceId)
 })
 
 // --- ACTIONS ---
@@ -86,11 +98,13 @@ const openDatePicker = (event) => {
 
 // --- SUBMIT ---
 const handleSubmit = async () => {
-  if (!form.resourceId || !form.title || !form.startDate || !form.endDate || !form.startTime || !form.endTime) {
+  // 1. Validatie check
+  if (!isFormValid.value) {
     alert('Vul alle verplichte velden in.')
     return
   }
 
+  // 2. Datum logica check
   const startFull = new Date(`${form.startDate}T${form.startTime}`)
   const endFull = new Date(`${form.endDate}T${form.endTime}`)
 
@@ -108,8 +122,7 @@ const handleSubmit = async () => {
     end_time: endFull.toISOString(),
   }
 
-  // HIER GEBRUIKEN WE SUPABASE DIRECT (Zoals gevraagd)
-  // Dit werkt altijd, zolang je useSupabase.js composable correct is.
+  // HIER GEBRUIKEN WE SUPABASE DIRECT (Zoals in je originele code)
   const { error } = await supabase
       .from('reservations')
       .insert([payload])
@@ -124,11 +137,10 @@ const handleSubmit = async () => {
     form.endTime = ''
     form.resourceId = null
 
-    // Vertel de store dat er data is veranderd (zodat de tellers updaten)
+    // Vertel de store dat er data is veranderd
     await dataStore.fetchResources() // Update de counts
-    if (dataStore.fetchReservations) await dataStore.fetchReservations() // Update de lijst (indien beschikbaar)
+    if (dataStore.fetchReservations) await dataStore.fetchReservations() // Update de lijst
 
-    // Refresh de pagina data
     emit('success')
   } else {
     alert('Fout bij opslaan: ' + (error.message || 'Onbekende fout'))
@@ -138,11 +150,12 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div> <div
-      v-if="showResourceMenu || showStartMenu || showEndMenu"
-      @click="closeAllMenus"
-      class="fixed inset-0 z-30 bg-transparent w-full h-full cursor-default"
-  ></div>
+  <div>
+    <div
+        v-if="showResourceMenu || showStartMenu || showEndMenu"
+        @click="closeAllMenus"
+        class="fixed inset-0 z-30 bg-transparent w-full h-full cursor-default"
+    ></div>
 
     <div class="bg-slate-800 p-6 rounded-2xl shadow-xl text-white max-w-lg w-full border border-slate-700 relative">
       <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
@@ -152,7 +165,7 @@ const handleSubmit = async () => {
       <form @submit.prevent="handleSubmit" class="space-y-5">
 
         <div>
-          <label class="block text-sm text-slate-300 mb-1">Titel</label>
+          <label class="block text-sm text-slate-300 mb-1">Titel <span class="text-red-400">*</span></label>
           <input
               v-model="form.title"
               type="text"
@@ -162,7 +175,7 @@ const handleSubmit = async () => {
         </div>
 
         <div class="relative" :class="showResourceMenu ? 'z-50' : 'z-20'">
-          <label class="block text-sm text-slate-300 mb-2">Kies Resource</label>
+          <label class="block text-sm text-slate-300 mb-2">Kies Resource <span class="text-red-400">*</span></label>
           <div class="flex gap-3 items-center">
             <div class="relative w-full">
               <div
@@ -205,11 +218,11 @@ const handleSubmit = async () => {
 
         <div class="grid grid-cols-2 gap-4 relative" :class="showStartMenu ? 'z-50' : 'z-10'">
           <div class="col-span-1 cursor-pointer">
-            <label class="block text-sm text-slate-300 mb-1">Start Datum</label>
+            <label class="block text-sm text-slate-300 mb-1">Start Datum <span class="text-red-400">*</span></label>
             <input v-model="form.startDate" type="date" @click="openDatePicker" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-200 [color-scheme:dark] cursor-pointer" />
           </div>
           <div class="col-span-1 relative">
-            <label class="block text-sm text-slate-300 mb-1">Start Tijd</label>
+            <label class="block text-sm text-slate-300 mb-1">Start Tijd <span class="text-red-400">*</span></label>
             <div @click="showStartMenu = !showStartMenu; showEndMenu = false; showResourceMenu = false" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 cursor-pointer flex justify-between items-center hover:border-slate-500 transition" :class="{'border-blue-500 ring-1 ring-blue-500': showStartMenu}">
               <span>{{ form.startTime || '--:--' }}</span>
               <svg class="h-3 w-3 fill-slate-400" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
@@ -222,11 +235,11 @@ const handleSubmit = async () => {
 
         <div class="grid grid-cols-2 gap-4 relative" :class="showEndMenu ? 'z-50' : 'z-0'">
           <div class="col-span-1 cursor-pointer">
-            <label class="block text-sm text-slate-300 mb-1">Eind Datum</label>
+            <label class="block text-sm text-slate-300 mb-1">Eind Datum <span class="text-red-400">*</span></label>
             <input v-model="form.endDate" type="date" @click="openDatePicker" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-200 [color-scheme:dark] cursor-pointer" />
           </div>
           <div class="col-span-1 relative">
-            <label class="block text-sm text-slate-300 mb-1">Eind Tijd</label>
+            <label class="block text-sm text-slate-300 mb-1">Eind Tijd <span class="text-red-400">*</span></label>
             <div @click="showEndMenu = !showEndMenu; showStartMenu = false; showResourceMenu = false" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 cursor-pointer flex justify-between items-center hover:border-slate-500 transition" :class="{'border-blue-500 ring-1 ring-blue-500': showEndMenu}">
               <span>{{ form.endTime || '--:--' }}</span>
               <svg class="h-3 w-3 fill-slate-400" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
@@ -237,8 +250,17 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <button type="submit" :disabled="isSubmitting" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-lg transition-colors mt-2 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
-          {{ isSubmitting ? 'Bezig met opslaan...' : 'Bevestig Reservatie' }}
+        <button
+            type="submit"
+            :disabled="!isFormValid || isSubmitting"
+            class="w-full font-medium py-3 rounded-lg transition-all mt-2 shadow-lg
+               text-white
+               disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none
+               bg-blue-600 hover:bg-blue-500 shadow-blue-500/20"
+        >
+          <span v-if="isSubmitting">Bezig met opslaan...</span>
+          <span v-else-if="!isFormValid">Vul alle velden in</span>
+          <span v-else>Bevestig Reservatie</span>
         </button>
 
       </form>

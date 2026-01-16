@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useSupabase } from '~/composables/useSupabase'
+import { useDataStore} from "~/stores/useDataStore.js";
+import {useSupabase} from "~/composables/useSupabase.js";
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
