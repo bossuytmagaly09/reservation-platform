@@ -130,6 +130,28 @@ export const useDataStore = defineStore('dataStore', {
             ])
 
             return { success: true }
+        },
+
+        // --- 6. Reservatie verwijderen (NIEUW) ---
+        async deleteReservation(id) {
+            const supabase = useSupabase()
+
+            if (!supabase) return { success: false, error: { message: "Geen database verbinding" } }
+
+            const { error } = await supabase
+                .from('reservations')
+                .delete()
+                .eq('id', id)
+
+            if (error) return { success: false, error }
+
+            // Ververs ALLES zodat de kalender en counts direct updaten
+            await Promise.all([
+                this.fetchReservations(),
+                this.fetchResources()
+            ])
+
+            return { success: true }
         }
     }
 })

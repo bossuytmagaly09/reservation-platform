@@ -68,6 +68,20 @@ const calendarEvents = computed(() => {
   })
 })
 
+const deleteEvent = async () => {
+  if (!selectedEvent.value?.id) return
+
+  if (confirm('Ben je zeker dat je deze reservatie wilt verwijderen? Dit kan niet ongedaan worden gemaakt.')) {
+    const res = await boardStore.deleteReservation(selectedEvent.value.id)
+    if (res.success) {
+      showModal.value = false
+      selectedEvent.value = null
+    } else {
+      alert('Er ging iets mis bij het verwijderen: ' + (res.error?.message || 'Onbekende fout'))
+    }
+  }
+}
+
 const goToToday = () => {
   if (calendarRef.value) {
     const calendarApi = calendarRef.value.getApi()
@@ -94,6 +108,7 @@ const calendarOptions = computed(() => ({
   eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false },
   eventClick: (info) => {
     selectedEvent.value = {
+      id: info.event.id, // ID toegevoegd voor delete actie
       title: info.event.title,
       resource: info.event.extendedProps.resourceName,
       start: info.event.start,
@@ -138,7 +153,24 @@ const calendarOptions = computed(() => ({
                 </div>
               </div>
             </div>
-            <button @click="showModal = false" class="w-full mt-4 bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-600 dark:text-white border font-medium py-2 px-4 rounded-lg transition-colors">Sluiten</button>
+
+            <div class="grid grid-cols-2 gap-3 mt-6">
+              <button
+                  @click="deleteEvent"
+                  class="w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Verwijderen
+              </button>
+
+              <button
+                  @click="showModal = false"
+                  class="w-full bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-600 dark:text-white border font-medium py-2 px-4 rounded-lg transition-colors">
+                Sluiten
+              </button>
+            </div>
+
           </div>
         </div>
       </div>
