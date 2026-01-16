@@ -2,23 +2,21 @@
 import { computed } from 'vue'
 import ReservationsCard from '~/components/ReservationsCard.vue'
 
-// Props van parent component (reservations.vue)
 const props = defineProps({
   items: {
     type: Array,
     required: true
   },
-  loading: { // Ik heb deze prop toegevoegd zodat v-if="loading" werkt, of haal je die uit een store?
+  loading: {
     type: Boolean,
     default: false
   },
-  error: {   // Hetzelfde voor error
+  error: {
     type: String,
     default: null
   }
 })
 
-// Props gebruiken - geen dubbele data fetching meer
 const sortedReservations = computed(() => {
   return [...props.items].sort((a, b) => {
     return new Date(a.start_time) - new Date(b.start_time)
@@ -27,17 +25,18 @@ const sortedReservations = computed(() => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto bg-slate-800 border border-slate-700 rounded-2xl shadow-xl p-6 text-white">
+  <div class="max-w-4xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900
+              dark:bg-slate-800 dark:border-slate-700 dark:text-white transition-colors duration-300">
 
-    <div v-if="loading" class="text-center py-20 text-slate-400">
+    <div v-if="loading" class="text-center py-20 text-slate-500 dark:text-slate-400">
       ⏳ Reservaties laden...
     </div>
 
-    <div v-else-if="error" class="text-center py-20 text-red-400 font-medium">
+    <div v-else-if="error" class="text-center py-20 text-red-500 dark:text-red-400 font-medium">
       ❌ {{ error }}
     </div>
 
-    <div v-else-if="sortedReservations.length === 0" class="text-center py-20 text-slate-400">
+    <div v-else-if="sortedReservations.length === 0" class="text-center py-20 text-slate-500 dark:text-slate-400">
       Geen reservaties gevonden.
     </div>
 
