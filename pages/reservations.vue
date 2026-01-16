@@ -44,43 +44,40 @@
             </select>
           </div>
         </div>
-
-        <div class="flex items-end h-full pb-0.5" v-if="filterDate || filterResourceId">
-          <button
-              @click="resetFilters"
-              class="text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 px-3 py-2 rounded-lg transition-colors flex items-center gap-1 h-[38px] mt-auto"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            Wis
-          </button>
-        </div>
       </div>
     </div>
 
     <div v-if="filterDate || filterResourceId" class="w-full animate-fade-in-down">
 
-      <div v-if="filteredReservations.length === 0" class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between text-red-200">
+      <div v-if="filteredReservations.length === 0" class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between text-red-200 shadow-lg">
         <div class="flex items-center gap-3">
-          <div class="bg-red-500/20 p-2 rounded-full">
+          <div class="bg-red-500/20 p-2 rounded-full hidden sm:block">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           </div>
           <div>
             <span class="font-semibold block text-white">Geen resultaten gevonden</span>
-            <span class="text-sm text-red-300">Er zijn geen reservaties die voldoen aan je zoekopdracht.</span>
+            <span class="text-sm text-red-300">Er zijn geen reservaties voor deze selectie.</span>
           </div>
         </div>
-        <button @click="resetFilters" class="text-sm bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors shadow-lg">
-          Wis Filters
+        <button @click="resetFilters" class="whitespace-nowrap text-xs sm:text-sm bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition-colors shadow-lg flex items-center gap-2">
+          <span>Wis Filters</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>
 
-      <div v-else class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 flex items-center gap-3 text-blue-200">
-        <div class="bg-blue-500/20 p-1.5 rounded-full">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+      <div v-else class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 flex items-center justify-between text-blue-200 shadow-lg">
+        <div class="flex items-center gap-3">
+          <div class="bg-blue-500/20 p-1.5 rounded-full hidden sm:block">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+          </div>
+          <span class="text-sm">
+            Resultaat: <strong class="text-white">{{ filteredReservations.length }}</strong> reservatie(s) gevonden.
+            </span>
         </div>
-        <span class="text-sm">
-           Gefilterd resultaat: <strong class="text-white">{{ filteredReservations.length }}</strong> reservatie(s) gevonden.
-         </span>
+        <button @click="resetFilters" class="whitespace-nowrap text-xs sm:text-sm bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition-colors shadow-lg flex items-center gap-2">
+          <span>Wis Filters</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
       </div>
 
     </div>
@@ -188,13 +185,12 @@ onMounted(() => {
 const filteredReservations = computed(() => {
   let items = [...reservations.value]
 
-  // Filter 1: Datum (SUPER ROBUUST)
+  // Filter 1: Datum (ROBUUST)
   if (filterDate.value) {
     items = items.filter(res => {
       if (!res.start_time || !res.end_time) return false
 
       const filterDag = filterDate.value
-      // We gebruiken substring om puur de datum (YYYY-MM-DD) te pakken
       const startDag = res.start_time.substring(0, 10)
       const eindDag = res.end_time.substring(0, 10)
 
@@ -205,7 +201,6 @@ const filteredReservations = computed(() => {
   // Filter 2: Resource
   if (filterResourceId.value) {
     items = items.filter(res => {
-      // Check op zowel resources_id als resource_id voor de zekerheid
       const resId = res.resources_id || res.resource_id
       return resId == filterResourceId.value
     })
@@ -219,36 +214,33 @@ const filteredReservations = computed(() => {
 </script>
 
 <style scoped>
-/* ... animaties ... */
 .grid > div, .space-y-8 > div {
   animation: fadeIn 0.4s ease-out;
 }
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
 .animate-fade-in-down {
   animation: fadeInDown 0.3s ease-out forwards;
 }
+
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- KALENDER STIJL --- */
-
+/* --- KALENDER STIJL (DARK) --- */
 .dark-calendar {
-  /* Zorgt voor de donkere popup */
   color-scheme: dark;
 }
-
-/* Pas het icoontje aan */
 .dark-calendar::-webkit-calendar-picker-indicator {
-  /* GEEN invert meer nodig, want in dark mode is hij al wit! */
-  opacity: 0.6; /* Iets minder fel */
+  opacity: 0.6;
   cursor: pointer;
 }
 .dark-calendar::-webkit-calendar-picker-indicator:hover {
-  opacity: 1; /* Feller als je erover muist */
+  opacity: 1;
 }
 </style>
