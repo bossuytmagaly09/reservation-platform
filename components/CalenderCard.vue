@@ -7,6 +7,14 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import nlLocale from '@fullcalendar/core/locales/nl'
 
+// 1. NIEUW: We accepteren 'events' van buitenaf (uit de filter)
+const props = defineProps({
+  events: {
+    type: Array,
+    default: null
+  }
+})
+
 const boardStore = useDataStore()
 const calendarRef = ref(null)
 
@@ -15,8 +23,13 @@ const showModal = ref(false)
 const selectedEvent = ref(null)
 
 onMounted(async () => {
+  // We halen altijd resources op (voor de kleurtjes)
   await boardStore.fetchResources()
-  await boardStore.fetchReservations()
+
+  // Alleen als er GEEN props zijn, halen we zelf de reservaties op
+  if (!props.events) {
+    await boardStore.fetchReservations()
+  }
 })
 
 // --- 1. KLEUREN EN STIJL (GLASS LOOK) ---
@@ -24,7 +37,7 @@ const getResourceStyle = (resource) => {
   if (!resource) return { bg: 'rgba(148, 163, 184, 0.2)', border: 'rgba(148, 163, 184, 0.5)', text: '#cbd5e1' }
 
   const typeId = resource.resources_types_id
-  const name = resource.name.toLowerCase()
+  const name = (resource.name || '').toLowerCase()
 
   // Meeting Rooms (Blauw)
   if (typeId === 1) {
@@ -54,14 +67,22 @@ const formatDate = (dateObj) => {
 
 // --- 2. EVENTS MAPPEN ---
 const calendarEvents = computed(() => {
-  if (!boardStore.reservations || !Array.isArray(boardStore.reservations)) {
+  // HIER ZIT DE FIX:
+  // Gebruik de props (gefilterde lijst) als die er is, anders de store (alles)
+  const sourceData = props.events || boardStore.reservations
+
+  if (!sourceData || !Array.isArray(sourceData)) {
     return []
   }
 
-  return boardStore.reservations.map(res => {
+  return sourceData.map(res => {
+    // Check op resources_id (zoals jij aangaf) OF resource_id (standaard) voor zekerheid
+    const resId = res.resources_id || res.resource_id
+
     const linkedResource = boardStore.resources
-        ? boardStore.resources.find(r => r.id === res.resources_id)
+        ? boardStore.resources.find(r => r.id === resId)
         : null
+
     const style = getResourceStyle(linkedResource)
 
     return {
@@ -83,9 +104,11 @@ const calendarEvents = computed(() => {
 
 // --- 3. CUSTOM ACTIONS ---
 const goToToday = () => {
-  const calendarApi = calendarRef.value.getApi()
-  calendarApi.today()
-  calendarApi.changeView('timeGridDay')
+  if (calendarRef.value) {
+    const calendarApi = calendarRef.value.getApi()
+    calendarApi.today()
+    calendarApi.changeView('timeGridDay')
+  }
 }
 
 // --- 4. KALENDER OPTIES ---
@@ -107,6 +130,7 @@ const calendarOptions = computed(() => ({
 
   buttonText: { month: 'Maand', week: 'Week', day: 'Dag' },
 
+  // Koppel de events
   events: calendarEvents.value,
 
   slotMinTime: '06:00:00',
@@ -189,59 +213,45 @@ const calendarOptions = computed(() => ({
   color: #94a3b8;
 }
 
-/* 1. ALGEMEEN EVENT STYLE (Glass effect) */
 :deep(.fc-event) {
   border-radius: 4px !important;
   font-weight: 500;
   backdrop-filter: blur(4px);
   border-style: solid !important;
   border-width: 1px !important;
-  /* Zorgt dat inhoud niet buiten het blokje valt */
   overflow: hidden;
 }
 
-/* 2. TEKST & TIJD LOGICA (FIX VOOR PUNTJES ...) */
-
-/* De container voor tekst in een event */
 :deep(.fc-event-main) {
-  /* Zorgt dat dit een flex container is */
   display: flex !important;
   align-items: center !important;
   padding: 1px 4px !important;
-  gap: 4px; /* Ruimte tussen tijd en titel */
+  gap: 4px;
   overflow: hidden !important;
-  width: 100%; /* Zeker weten dat hij de breedte pakt */
+  width: 100%;
 }
 
-/* De Tijd (09:00) */
 :deep(.fc-event-time) {
   font-weight: 700;
   color: #fff;
   font-size: 0.75rem;
-  /* Flexbox fix: Zorg dat tijd nooit krimpt */
   flex-shrink: 0 !important;
   white-space: nowrap !important;
 }
 
-/* De Titel (Project X) */
 :deep(.fc-event-title) {
   font-weight: 500;
   color: #fff;
   font-size: 0.8rem;
   opacity: 0.95;
-
-  /* Flexbox fix: Zorg dat titel mag krimpen en de rest opvult */
   flex-grow: 1 !important;
-  min-width: 0 !important; /* CRUCIAAL VOOR FLEXBOX ELLIPSIS! */
-
-  /* De ellipsis magie */
+  min-width: 0 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   display: block !important;
 }
 
-/* 3. SPECIFIEK VOOR DAG/WEEK OVERZICHT (Verticale blokken) */
 :deep(.fc-timegrid-event) {
   border-radius: 6px !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
@@ -249,28 +259,24 @@ const calendarOptions = computed(() => ({
   min-height: 25px !important;
 }
 
-/* In dagweergave willen we tijd boven titel als er ruimte is */
 :deep(.fc-timegrid-event .fc-event-main) {
-  flex-direction: column !important; /* Onder elkaar */
+  flex-direction: column !important;
   align-items: flex-start !important;
   gap: 0;
   padding: 4px 6px !important;
 }
 
-/* Tijd in dagweergave */
 :deep(.fc-timegrid-event .fc-event-time) {
   font-size: 0.75rem;
   margin-bottom: 2px;
 }
 
-/* Titel in dagweergave */
 :deep(.fc-timegrid-event .fc-event-title) {
-  white-space: normal !important; /* In verticale weergave mag tekst wél wrappen als dat past */
+  white-space: normal !important;
   overflow: hidden !important;
-  text-overflow: clip !important; /* Geen puntjes in verticaal blok, gewoon afkappen of wrappen */
+  text-overflow: clip !important;
 }
 
-/* KNOPPEN */
 :deep(.fc-button) {
   background-color: rgba(30, 41, 59, 1) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -293,7 +299,6 @@ const calendarOptions = computed(() => ({
   color: white !important;
 }
 
-/* GRID */
 :deep(.fc-toolbar-title) { color: #f1f5f9; font-size: 1.4rem !important; font-weight: 700; }
 :deep(.fc-col-header-cell-cushion) { color: #64748b; text-transform: uppercase; font-size: 0.7rem; font-weight: 700; padding-bottom: 10px; letter-spacing: 0.05em; text-decoration: none !important; }
 :deep(.fc-timegrid-slot-label-cushion) { color: #94a3b8; font-size: 0.8rem; font-weight: 500; }
